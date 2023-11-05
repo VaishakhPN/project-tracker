@@ -1,4 +1,3 @@
-// src/components/TaskForm.js
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { addTask } from '../slices/tasksSlice';
@@ -14,7 +13,6 @@ const TaskForm = () => {
 
   const handleSubmit = () => {
     dispatch(addTask({ title, description, acceptanceCriteria, category }));
-    // Reset the form fields
     setTitle('');
     setDescription('');
     setAcceptanceCriteria('');
