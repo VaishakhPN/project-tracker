@@ -1,5 +1,5 @@
+// src/App.js
 import React from 'react';
-// import './App.css';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
 import HomePage from './components/HomePage';
@@ -25,4 +25,3 @@ function App() {
 }
 
 export default App;
-

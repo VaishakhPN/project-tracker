@@ -1,11 +1,12 @@
+// src/components/TaskList.js
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { selectTasks } from '../slices/tasksSlice';
 
 const TaskList = () => {
   const tasks = useSelector(selectTasks);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedTask, setSelectedTask] = useState(null); // State to store selected task
+  const [selectedCategory, setSelectedCategory] = useState('All'); // State to store selected category
 
   const categories = ['All', ...new Set(tasks.map(task => task.category))];
 
@@ -17,6 +18,7 @@ const TaskList = () => {
     setSelectedCategory(category);
   };
 
+  // Filter tasks based on the selected category
   const filteredTasks = selectedCategory === 'All'
     ? tasks
     : tasks.filter(task => task.category === selectedCategory);
