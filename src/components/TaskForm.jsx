@@ -12,18 +12,25 @@ const TaskForm = () => {
   const dispatch = useDispatch();
 
   const handleSubmit = () => {
-    dispatch(addTask({ title, description, acceptanceCriteria, category }));
+    if (!category || !title) {
+      alert('Category and Title are required fields.');
+      return;
+    }
+
+    dispatch(addTask({ title, category, requirements, description, comments }));
+    
     setTitle('');
-    setDescription('');
-    setAcceptanceCriteria('');
     setCategory('');
+    setRequirements('');
+    setDescription('');
+    setComments('');
   };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold mb-4">Create a New Task</h2>
       <form>
-      <div className="mb-4">
+        <div className="mb-4">
           <input
             type="text"
             placeholder="Category"
@@ -57,19 +64,10 @@ const TaskForm = () => {
             className="w-full p-2 border rounded"
           />
         </div>
-        <div className="mb-4">
-          <textarea
-            placeholder="Comments"
-            value={comments}
-            onChange={(e) => setComments(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
         <button
           type="button"
           onClick={handleSubmit}
-          className="bg-blue-500 text-white p-2 rounded hover:bg-blue-700"
-        >
+          className="bg-blue-500 text-white p-2 rounded hover:bg-blue-700">
           Create Task
         </button>
       </form>
