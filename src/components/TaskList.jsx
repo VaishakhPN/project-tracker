@@ -68,10 +68,18 @@ const TaskList = () => {
     console.log('Edit clicked');
   };
 
-  const handleDelete = () => {
-    // Define the logic for handling the delete action here
-    console.log('Delete clicked');
+  const handleDelete = (id) => {
+    axios.delete(`http://localhost:8080/tickets/${id}`)
+      .then((response) => {
+        console.log('Task deleted successfully');
+        window.location.reload();
+        // You can also update the taskData state to remove the deleted task if needed.
+      })
+      .catch((error) => {
+        console.error('Error deleting task:', error);
+      });
   };
+  
 
   // Add an event listener to close the menu when clicking outside
   useEffect(() => {
@@ -144,7 +152,7 @@ const TaskList = () => {
                         Edit
                       </button>
                       <button
-                        onClick={handleDelete}
+                        onClick={ ()=> handleDelete(selectedTask.id)}
                         className="text-red-500 underline block cursor-pointer"
                       >
                         Delete
