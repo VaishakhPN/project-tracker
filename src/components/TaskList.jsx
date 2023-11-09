@@ -10,17 +10,29 @@ const TaskList = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [taskData, setTaskData] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [allCat, setAllCat] = useState(null)
 
   const handleFetchTaskClick = (task) => {
     setSelectedTask(task);
     setIsDropdownOpen(false);
   };
 
+  const getCategoryNames = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/category/view');
+      const uniqueNames = [...new Set(response.data.map(category => category.name).filter(name => name !== null))];
+      setAllCat(uniqueNames)
+    } catch (error) {
+      console.error('Error fetching category names:', error);
+      return [];
+    }
+  };
+
   const fetchTaskData = async () => {
     try {
       const response = await axios.get('http://localhost:8080/tickets/view');
       setTaskData(response.data);
-      console.log(response.data)
     } catch (error) {
       console.error('Error fetching task data:', error);
     }
@@ -28,6 +40,8 @@ const TaskList = () => {
 
   useEffect(() => {
     fetchTaskData();
+    getCategoryNames();
+
   }, []);
 
   const addComment = () => {
@@ -64,8 +78,25 @@ const TaskList = () => {
   };
 
   const handleEdit = () => {
-    // Define the logic for handling the edit action here
-    console.log('Edit clicked');
+    const newRequirements = prompt('Edit Requirements:', selectedTask.requirements);
+    const newDescription = prompt('Edit Description:', selectedTask.description);
+  
+    if (newRequirements !== null || newDescription !== null) {
+      const updatedTask = {
+        ...selectedTask,
+        requirements: newRequirements || selectedTask.requirements, 
+        description: newDescription || selectedTask.description, 
+      };
+  
+      axios.put(`http://localhost:8080/tickets/${selectedTask.id}`, updatedTask)
+        .then((response) => {
+          console.log('Task updated successfully');
+          setSelectedTask(updatedTask);
+        })
+        .catch((error) => {
+          console.error('Error updating task:', error);
+        });
+    }
   };
 
   const handleDelete = (id) => {
@@ -73,15 +104,12 @@ const TaskList = () => {
       .then((response) => {
         console.log('Task deleted successfully');
         window.location.reload();
-        // You can also update the taskData state to remove the deleted task if needed.
       })
       .catch((error) => {
         console.error('Error deleting task:', error);
       });
   };
-  
 
-  // Add an event listener to close the menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -100,14 +128,36 @@ const TaskList = () => {
     };
   }, [isDropdownOpen]);
 
+  const filteredTasks = taskData ? (
+    selectedCategory === 'All' ? taskData : taskData.filter(task => task.category === selectedCategory)
+  ) : [];
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Task List</h2>
+
+      <div className="mb-4">
+        <h3 className="text-lg font-medium mb-2">Filter by Category</h3>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="p-2 border rounded"
+        >
+          <option value="All">All Categories</option>
+          {allCat !== null &&
+          allCat.map((name, index) => (
+            <option key={index} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="flex">
         <div className="w-1/3 p-4">
           <ul className="border-r border-gray-300 pr-4">
-            {taskData ? (
-              taskData.map((task) => (
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map((task) => (
                 <li
                   key={task.id}
                   onClick={() => handleFetchTaskClick(task)}
@@ -126,7 +176,7 @@ const TaskList = () => {
                 </li>
               ))
             ) : (
-              <p>Loading tasks...</p>
+              <p>No tasks available.</p>
             )}
           </ul>
         </div>
@@ -152,7 +202,7 @@ const TaskList = () => {
                         Edit
                       </button>
                       <button
-                        onClick={ ()=> handleDelete(selectedTask.id)}
+                        onClick={() => handleDelete(selectedTask.id)}
                         className="text-red-500 underline block cursor-pointer"
                       >
                         Delete
@@ -197,3 +247,62 @@ const TaskList = () => {
 };
 
 export default TaskList;
+
+
+
+
+
+
+
+
+
+
+
+// src/components/TaskList.js
+// import React, { useState } from 'react';
+// import { useSelector } from 'react-redux';
+// import { selectTasks } from '../slices/tasksSlice';
+
+// const TaskList = () => {
+//   const tasks = useSelector(selectTasks);
+//   const [selectedCategory, setSelectedCategory] = useState('All'); // Initialize with 'All'
+
+//   // Filter tasks based on the selected category
+//   const filteredTasks = selectedCategory === 'All'
+//     ? tasks
+//     : tasks.filter(task => task.category === selectedCategory);
+
+//   const categories = [...new Set(tasks.map(task => task.category))];
+
+//   return (
+//     <div>
+//       <h2>Task List</h2>
+
+//       {/* Category filter dropdown */}
+//       <select
+//         value={selectedCategory}
+//         onChange={e => setSelectedCategory(e.target.value)}
+//       >
+//         <option value="All">All Categories</option>
+//         {categories.map(category => (
+//           <option key={category} value={category}>
+//             {category}
+//           </option>
+//         ))}
+//       </select>
+
+//       <ul>
+//         {filteredTasks.map(task => (
+//           <li key={task.id}>
+//             <h3>{task.title}</h3>
+//             <p>{task.description}</p>
+//             <p>Acceptance Criteria: {task.acceptanceCriteria}</p>
+//             <p>Category: {task.category}</p>
+//           </li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// };
+
+// export default TaskList;
