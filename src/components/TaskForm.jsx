@@ -4,29 +4,39 @@ import { addTask } from '../slices/tasksSlice';
 import axios from 'axios';
 
 const TaskForm = () => {
-  const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [title, setTitle] = useState('');
-  const [requirements, setRequirements] = useState('');
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState('');
   const [description, setDescription] = useState('');
   const [comments, setComments] = useState('');
   const dispatch = useDispatch();
 
-  const postCategory = async (name) => {
-    try {
-      const newCategoryData = { name };
-      const response = await axios.post('http://localhost:8080/category/create', newCategoryData);
-      console.log('post response 1',response.data);
-      return response.data;
-    } catch (error) {
-      console.log('An error occurred while creating a new category.');
-    }
-  };
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/category/view');
+        setCategories(response.data);
+      } catch (error) {
+        console.log('An error occurred while fetching categories.');
+      }
+    };
 
-  const postTicket = async (categoryId) => {
+    fetchCategories();
+  }, []);
+
+  const postTicket = async () => {
     try {
-      const newTaskData = { categoryId, title, requirements, description, comments};
+      const newTaskData = {
+        "category":{categoryId: selectedCategory},
+        title,
+        acceptanceCriteria,
+        description,
+        comments,
+      };
       const response = await axios.post('http://localhost:8080/tickets/create', newTaskData);
-      console.log('post response 2',response);
+      console.log(newTaskData)
+      console.log('post response 2', response);
       return response.data;
     } catch (error) {
       console.log('An error occurred while creating a new task.');
@@ -36,27 +46,23 @@ const TaskForm = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!category || !title) {
+    if (!selectedCategory || !title) {
       alert('Category and Title are required fields.');
       return;
     }
 
     try {
-      const categoryResponse = await postCategory(category);
+      const taskResponse = await postTicket();
 
-      if (categoryResponse) {
-        const taskResponse = await postTicket(categoryResponse.categoryId);
+      dispatch(addTask(taskResponse));
 
-        dispatch(addTask(taskResponse));
-
-        setCategory('');
-        setTitle('');
-        setRequirements('');
-        setDescription('');
-        setComments('');
-      }
+      setSelectedCategory('');
+      setTitle('');
+      setAcceptanceCriteria('');
+      setDescription('');
+      setComments('');
     } catch (error) {
-      console.log('An error occurred while creating a new category or task.');
+      console.log('An error occurred while creating a new task.');
     }
   };
 
@@ -65,13 +71,20 @@ const TaskForm = () => {
       <h2 className="text-2xl font-semibold mb-4">Create a New Task</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             className="w-full p-2 border rounded"
-          />
+          >
+            <option value="" disabled>
+              Select Category
+            </option>
+            {categories.map((category) => (
+              <option key={category.categoryId} value={category.categoryId}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="mb-4">
           <input
@@ -84,9 +97,9 @@ const TaskForm = () => {
         </div>
         <div className="mb-4">
           <textarea
-            placeholder="Requirements"
-            value={requirements}
-            onChange={(e) => setRequirements(e.target.value)}
+            placeholder="Acceptance Criteria"
+            value={acceptanceCriteria}
+            onChange={(e) => setAcceptanceCriteria(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -98,14 +111,6 @@ const TaskForm = () => {
             className="w-full p-2 border rounded"
           />
         </div>
-        {/* <div className="mb-4">
-          <textarea
-            placeholder="Comments"
-            value={comments}
-            onChange={(e) => setComments(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div> */}
         <button
           type="submit"
           className="bg-blue-500 text-white p-2 rounded hover-bg-blue-700"
