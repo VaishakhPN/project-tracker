@@ -11,11 +11,12 @@ const TaskForm = () => {
   const [description, setDescription] = useState('');
   const [comments, setComments] = useState('');
   const dispatch = useDispatch();
+  const link = "http://localhost:8080"
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/category/view');
+        const response = await axios.get(`${link}/category/view`);
         setCategories(response.data);
       } catch (error) {
         console.log('An error occurred while fetching categories.');
@@ -28,7 +29,7 @@ const TaskForm = () => {
   const postTicket = async () => {
     try {
       const newTaskData = {
-        "category":{categoryId: selectedCategory},
+        category: categoryId.selectedCategory,
         title,
         acceptanceCriteria,
         description,
@@ -39,7 +40,7 @@ const TaskForm = () => {
       console.log('post response 2', response);
       return response.data;
     } catch (error) {
-      console.log('An error occurred while creating a new task.');
+      console.error('An error occurred while creating a new task.');
     }
   };
 

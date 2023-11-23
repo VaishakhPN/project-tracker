@@ -11,10 +11,13 @@ const TaskList = () => {
   const dropdownRef = useRef(null);
   const [taskData, setTaskData] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [allCat, setAllCat] = useState(null);
+  const [allCategories, setAllCategories] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedAcceptanceCriteria, setEditedAcceptanceCriteria] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
+  const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState('');
+  
 
   const handleFetchTaskClick = (task) => {
     console.log('Selected task:', task);
@@ -22,12 +25,23 @@ const TaskList = () => {
     setIsDropdownOpen(false);
     setIsEditing(false);
   };
+
+  const performSearch = async () => {
+    axios.get(`http://localhost:8080/tickets/search?query=${search}`)
+      .then(response => {
+        console.log('Search Results:', response.data);
+        setSearchResults(response.data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  }
   
   const getCategoryNames = async () => {
     try {
       const response = await axios.get('http://localhost:8080/category/view');
       const uniqueNames = [...new Set(response.data.map(category => category.name).filter(name => name !== null))];
-      setAllCat(uniqueNames);
+      setAllCategories(uniqueNames);
     } catch (error) {
       console.error('Error fetching category names:', error);
       return [];
@@ -95,6 +109,8 @@ const TaskList = () => {
 
   const startEditing = () => {
     setIsEditing(true);
+    setIsDropdownOpen(false);
+
     setEditedAcceptanceCriteria(selectedTask.acceptanceCriteria);
     setEditedDescription(selectedTask.description);
   };
@@ -134,11 +150,14 @@ const TaskList = () => {
         console.log('Task deleted successfully ${id}');
         setTaskData((prevData) => prevData.filter((task) => task.id !== id));
         setSelectedTask(null);
+        fetchTaskData();
+        setIsDropdownOpen(false);
+
       })
       .catch((error) => {
         console.error('Error deleting task:', error);
       });
-      window.location.reload();
+      // window.location.reload();
       
   };
 
@@ -182,58 +201,102 @@ const TaskList = () => {
     fetchData(selectedCategory);
   }, [selectedCategory]);
 
-
   return (
     <div className="mb-4">
     <h3 className="text-lg font-medium mb-2">Filter by Category</h3>
+    <div className='flex gap-8'>
     <select
       value={selectedCategory}
       onChange={(e) => setSelectedCategory(e.target.value)}
       className="p-2 border rounded"
     >
       <option value="All">All Categories</option>
-      {allCat !== null &&
-      allCat.map((name, index) => (
+      {allCategories !== null &&
+      allCategories.map((name, index) => (
         <option key={index} value={name}>
           {name}
         </option>
       ))}
     </select>
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Enter your search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500"
+      />
+      <button
+        onClick={performSearch}
+        className="bg-blue-500 text-white px-4 py-2 ml-2 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700"
+      >
+        Search
+      </button>
+    </div>
       <div className="flex">
         <div className="w-1/3 p-4">
           <ul className="border-r border-gray-300 pr-4">
-            {data.length > 0 ? (
-              data.map((task, index) => (
-                <li
-                  key={index}
-                  onClick={() => handleFetchTaskClick(task)}
-                  className={`cursor-pointer p-2 ${
-                    selectedTask === task ? 'bg-gray-100' : ''
-                  } mb-4 rounded-lg transition duration-300 hover:bg-gray-200`}
-                >
-                  <div className="flex items-center">
-                    <img
-                      src={Ticket}
-                      alt="Ticket Icon"
-                      className="w-5 h-5 mr-2 text-green-500"
-                    />
-                    <h3 className="text-lg font-medium">{task.title}</h3>
-                  </div>
-                </li>
-              ))
-            ) : (
-              <p>No tasks available.</p>
-            )}
+          {
+  searchResults.length > 0 ? (
+    <div>
+      <h2>Search Results:</h2>
+      <ul>
+        {searchResults.map((task, index) => (
+          <li
+            key={index}
+            onClick={() => handleFetchTaskClick(task)}
+            className={`cursor-pointer p-2 ${
+              selectedTask === task ? 'bg-gray-100' : ''
+            } mb-4 rounded-lg transition duration-300 hover:bg-gray-200`}
+          >
+            <div className="flex items-center">
+              <img
+                src={Ticket}
+                alt="Ticket Icon"
+                className="w-5 h-5 mr-2 text-green-500"
+              />
+              <h3 className="text-lg font-medium">{task.title}</h3>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : (
+    <div>
+      <h2>Task List:</h2>
+      <ul>
+        {data.length > 0 ? (
+          data.map((task, index) => (
+            <li
+              key={index}
+              onClick={() => handleFetchTaskClick(task)}
+              className={`cursor-pointer p-2 ${
+                selectedTask === task ? 'bg-gray-100' : ''
+              } mb-4 rounded-lg transition duration-300 hover:bg-gray-200`}
+            >
+              <div className="flex items-center">
+                <img
+                  src={Ticket}
+                  alt="Ticket Icon"
+                  className="w-5 h-5 mr-2 text-green-500"
+                />
+                <h3 className="text-lg font-medium">{task.title}</h3>
+              </div>
+            </li>
+          ))
+        ) : (
+          <p>No tasks available.</p>
+        )}
+      </ul>
+    </div>
+  )}
           </ul>
         </div>
-
         <div className="w-2/3 p-4">
           {selectedTask ? (
             <div className="bg-gray-100 p-4 rounded-lg">
               <div className="flex justify-between items-center">
-
-                <h3 className="text-2xl font-semibold mb-4">{selectedTask.title}</h3>
-
+                <h3 className="text-2xl font-semibold mb-4">TITLE: {selectedTask.title}</h3>
                 <div className="relative" ref={dropdownRef}>
                   <img
                     src={Menu}
@@ -262,9 +325,8 @@ const TaskList = () => {
               
               {isEditing ? (
                 <div>
-
                   <label>
-                  <h3 >{selectedTask.categoryName}</h3>
+                  <h3>CATEGORY: {selectedTask.categoryName}</h3>
                 <br />
                   AcceptanceCriteria:
                     <input
@@ -298,7 +360,7 @@ const TaskList = () => {
                 </div>
               ) : (
                 <div>
-                  <h3 >{selectedTask.categoryName}</h3>
+                  <h3>CATEGORY: {selectedTask.categoryName}</h3>
                   <br />
                   <p className="mb-4"><strong>Acceptance Criteria:</strong> {selectedTask.acceptanceCriteria}</p>
                   <p className="mb-4"><strong>Description:</strong> {selectedTask.description}</p>
