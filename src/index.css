@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* body{
+    background-image: url("https://www.pmmajik.com/wp-content/uploads/2014/10/Project-tracking-monitoring.jpg");
+    background-size: cover;
+    background-position: center;
+    background-position-y: -80px;
+} */

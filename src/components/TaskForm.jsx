@@ -1,49 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { addTask } from '../slices/tasksSlice';
-import axios from 'axios';
+import React, { useState,useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { addTask, createTask } from '../slices/createSlice';
+import { fetchCategoryNames } from '../slices/categorySlice';
 
 const TaskForm = () => {
-  const [categories, setCategories] = useState([]);
+  const categories = useSelector((state) => state.category.allCategories);
+  const dispatch = useDispatch();
+
   const [selectedCategory, setSelectedCategory] = useState('');
   const [title, setTitle] = useState('');
   const [acceptanceCriteria, setAcceptanceCriteria] = useState('');
   const [description, setDescription] = useState('');
   const [comments, setComments] = useState('');
-  const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8080/category/view`);
-        setCategories(response.data);
-      } catch (error) {
-        console.log('An error occurred while fetching categories.');
-      }
-    };
+    dispatch(fetchCategoryNames());
+  }, [dispatch]);
 
-    fetchCategories();
-  }, []);
-
-  const postTicket = async () => {
-    try {
-      const newTaskData = {
-        categoryId: selectedCategory,
-        title,
-        acceptanceCriteria,
-        description,
-        comments,
-      };
-      const response = await axios.post('http://localhost:8080/tickets/create', newTaskData);
-      console.log(newTaskData)
-      console.log('post response 2', response);
-      return response.data;
-    } catch (error) {
-      console.error('An error occurred while creating a new task.');
-    }
-  };
-
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
 
     if (!selectedCategory || !title) {
@@ -51,19 +25,21 @@ const TaskForm = () => {
       return;
     }
 
-    try {
-      const taskResponse = await postTicket();
+    const newTaskData = {
+      categoryId: selectedCategory,
+      title,
+      acceptanceCriteria,
+      description,
+      comments,
+    };
 
-      dispatch(addTask(taskResponse));
+    dispatch(createTask(newTaskData));
 
-      setSelectedCategory('');
-      setTitle('');
-      setAcceptanceCriteria('');
-      setDescription('');
-      setComments('');
-    } catch (error) {
-      console.log('An error occurred while creating a new task.');
-    }
+    setSelectedCategory('');
+    setTitle('');
+    setAcceptanceCriteria('');
+    setDescription('');
+    setComments('');
   };
 
   return (
@@ -74,12 +50,12 @@ const TaskForm = () => {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 rounded border"
           >
             <option value="" disabled>
               Select Category
             </option>
-            {categories.map((category) => (
+            {categories&& categories.map((category) => (
               <option key={category.categoryId} value={category.categoryId}>
                 {category.name}
               </option>
@@ -92,7 +68,7 @@ const TaskForm = () => {
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 rounded border"
           />
         </div>
         <div className="mb-4">
@@ -100,7 +76,7 @@ const TaskForm = () => {
             placeholder="Acceptance Criteria"
             value={acceptanceCriteria}
             onChange={(e) => setAcceptanceCriteria(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 rounded border"
           />
         </div>
         <div className="mb-4">
@@ -108,7 +84,7 @@ const TaskForm = () => {
             placeholder="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 rounded border"
           />
         </div>
         <button
